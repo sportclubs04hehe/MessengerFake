@@ -13,7 +13,7 @@ namespace MessengerFake.API.Helpers
             /*
              * ForMember(dest => dest.PhotoUrl, opt => opt.MapFrom(src => src.Photos.FirstOrDefault(x => x.IsMain).Url)):
                 dest.PhotoUrl: Trường đích PhotoUrl trong MemberDto.
-                src.Photos.FirstOrDefault(x => x.IsMain).Url: Lấy URL của ảnh chính (IsMain) từ danh sách ảnh của AppUser 
+                src.Photos.FirstOrDefault(x => x.IsMain).Url: Lấy URL của ảnh chính (IsMain) từ danh sách ảnh của AppUser. 
             cấu hình AutoMapper giúp đảm bảo rằng tất cả các giá trị thời gian được ánh xạ sẽ có múi giờ nhất
             quán là UTC. Điều này giúp tránh các lỗi liên quan đến múi giờ và đảm bảo tính nhất quán khi lưu trữ,
             xử lý, và truyền dữ liệu thời gian trong ứng dụng của bạn.
@@ -21,7 +21,7 @@ namespace MessengerFake.API.Helpers
             #endregion
             CreateMap<AppUser, MemberDto>()
                 .ForMember(dest => dest.PhotoUrl, opt =>
-                    opt.MapFrom(src => src.Photos.FirstOrDefault(x => x.IsMain).Url))
+                    opt.MapFrom(src => src.Photos.FirstOrDefault(x => x.IsMain)!.Url))
                 .ForMember(dest => dest.Age, opt => opt.MapFrom(src => src.DateOfBirth.CalculateAge()));
 
             CreateMap<Photo, PhotoDto>();
@@ -32,9 +32,9 @@ namespace MessengerFake.API.Helpers
 
             CreateMap<Message, MessageDto>()
                 .ForMember(d => d.SenderPhotoUrl, o => o.MapFrom(s => s.Sender.Photos
-                    .FirstOrDefault(x => x.IsMain).Url))
+                    .FirstOrDefault(x => x.IsMain)!.Url))
                 .ForMember(d => d.RecipientPhotoUrl, o => o.MapFrom(s => s.Recipient.Photos
-                    .FirstOrDefault(x => x.IsMain).Url));
+                    .FirstOrDefault(x => x.IsMain)!.Url));
 
             CreateMap<DateTime, DateTime>().ConvertUsing(d => DateTime.SpecifyKind(d, DateTimeKind.Utc));
 

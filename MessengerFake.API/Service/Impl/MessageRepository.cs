@@ -73,14 +73,42 @@ namespace MessengerFake.API.Service.Impl
             messageParams.PageSize);
         }
 
-        public Task<IEnumerable<MessageDto>> GetMessageThread(string currentUsername, string recipientUsername)
+        public async Task<IEnumerable<MessageDto>> GetMessageThread(string currentUsername, string recipientUsername)
         {
-            throw new NotImplementedException();
+            #region Giải thích
+            /*Tìm tin nhắn chưa đọc: Đoạn này tìm các tin nhắn trong query mà người nhận là người dùng hiện tại (currentUsername) 
+             * và chưa được đánh dấu là đã đọc (DateRead == null).
+            Đánh dấu là đã đọc: Nếu có tin nhắn chưa đọc (unreadMessages.Count != 0),
+            thay đổi DateRead của từng tin nhắn này thành thời gian hiện tại (DateTime.UtcNow).
+             * **/
+            #endregion
+            var query = _context.Messages
+           .Where(x =>
+               x.RecipientUsername == currentUsername
+                   && x.RecipientDeleted == false
+                   && x.SenderUsername == recipientUsername ||
+               x.SenderUsername == currentUsername
+                   && x.SenderDeleted == false
+                   && x.RecipientUsername == recipientUsername
+           )
+           .OrderBy(x => x.MessageSent) // Sắp xếp kết quả theo thời gian gửi (MessageSent).
+           .AsQueryable();
+
+            var unreadMessages = query.Where(x => x.DateRead == null &&
+           x.RecipientUsername == currentUsername).ToList();
+
+            if (unreadMessages.Count != 0)
+            {
+                unreadMessages.ForEach(x => x.DateRead = DateTime.UtcNow);
+            }
+
+            return await query.ProjectTo<MessageDto>(_mapper.ConfigurationProvider).ToListAsync();
         }
 
         public void RemoveConnection(Connection connection)
         {
-            throw new NotImplementedException();
+            _context.Connections.Remove(connection);
         }
+
     }
 }

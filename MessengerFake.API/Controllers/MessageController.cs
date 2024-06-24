@@ -15,32 +15,52 @@ namespace MessengerFake.API.Controllers
         [HttpPost]
         public async Task<ActionResult<MessageDto>> CreateMessage(CreateMessageDto createMessageDto)
         {
-            var username = User.GetUsername();
-
-            if (username == createMessageDto.RecipientUsername.ToLower())
+            try
             {
-                return BadRequest("Bạn không thể gửi tin nhắn cho chính mình");
+                var username = User.GetUsername();
+
+                if (username == createMessageDto.RecipientUsername.ToLower())
+                {
+                    return BadRequest("Bạn không thể gửi tin nhắn cho chính mình");
+                }
+
+                var sender = await unitOfWork.UserRepository.GetUserByUsernameAsync(username); // username người dùng gửi
+
+                var recipient = await unitOfWork.UserRepository.GetUserByUsernameAsync(createMessageDto.RecipientUsername); // username người dùng nhận
+
+                if (recipient == null || sender == null || sender.UserName == null || recipient.UserName == null)
+                {
+                    return BadRequest("Không thể gửi tin nhắn vào lúc này");
+                }
+
+                var message = new Message
+                {
+                    Sender = sender,
+                    Recipient = recipient,
+                    SenderUsername = sender.UserName,
+                    RecipientUsername = recipient.UserName,
+                    Content = createMessageDto.Content
+                };
+
+                unitOfWork.MessageRepository.AddMessage(message);
+
+                if (await unitOfWork.Complete()) return Ok(mapper.Map<MessageDto>(message));
+
+                return BadRequest("Không lưu được tin nhắn");
             }
-
-            var sender = await unitOfWork.UserRepository.GetUserByUsernameAsync(username); // username người dùng gửi
-
-            var recipient = await unitOfWork.UserRepository.GetUserByUsernameAsync(createMessageDto.RecipientUsername); // username người dùng nhận
-
-            if (recipient == null || sender == null || sender.UserName == null || recipient.UserName == null)
+            catch (Exception ex)
             {
-                return BadRequest("Không thể gửi tin nhắn vào lúc này");
+                return StatusCode(500, ex.InnerException?.Message ?? ex.Message);
             }
+        }
 
-            var message = new Message
-            {
-                Sender = sender,
-                Recipient = recipient,
-                SenderUsername = sender.UserName,
-                RecipientUsername = recipient.UserName,
-                Content = createMessageDto.Content
-            };
+        // Nhận chuỗi tin nhắn
+        [HttpGet("thread/{username}")]
+        public async Task<ActionResult<IEnumerable<MessageDto>>> GetMessageThread([FromRoute]string username)
+        {
+            var currentUsername = User.GetUsername();
 
-            unitOfWork.MessageRepository.AddMessage(message);
+            return Ok(await unitOfWork.MessageRepository.GetMessageThread(currentUsername, username));
         }
     }
 }

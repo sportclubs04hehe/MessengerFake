@@ -1,16 +1,15 @@
-﻿
-using AutoMapper;
-using MessengerFake.API.Data;
+﻿using MessengerFake.API.Data;
 
 namespace MessengerFake.API.Service.Impl
 {
     public class UnitOfWork(DataContext _context, IUserRepository userRepository,
-    IPhotoRepository photoRepository) : IUnitOfWork
+    IPhotoRepository photoRepository, IMessageRepository messageRepository) : IUnitOfWork
     {
 
         public IUserRepository UserRepository => userRepository;
 
         public IPhotoRepository PhotoRepository => photoRepository;
+        public IMessageRepository MessageRepository => messageRepository;
 
         public async Task<bool> Complete()
         {

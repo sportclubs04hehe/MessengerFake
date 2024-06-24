@@ -18,6 +18,8 @@ namespace MessengerFake.API.Extensions
 
             services.AddScoped<IPhotoRepository, PhotoRepository>();
 
+            services.AddScoped<IMessageRepository, MessageRepository>();
+
             services.AddScoped<IPhotoService, PhotoService>();
 
             services.AddScoped<LogUserActivity>();
