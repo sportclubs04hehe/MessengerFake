@@ -3,13 +3,15 @@
 namespace MessengerFake.API.Service.Impl
 {
     public class UnitOfWork(DataContext _context, IUserRepository userRepository,
-    IPhotoRepository photoRepository, IMessageRepository messageRepository) : IUnitOfWork
+    IPhotoRepository photoRepository, IMessageRepository messageRepository, ILikesRepository likesRepository) : IUnitOfWork
     {
 
         public IUserRepository UserRepository => userRepository;
 
         public IPhotoRepository PhotoRepository => photoRepository;
         public IMessageRepository MessageRepository => messageRepository;
+
+        public ILikesRepository LikesRepository => likesRepository;
 
         public async Task<bool> Complete()
         {
