@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using MessengerFake.API.Extensions;
+using MessengerFake.API.Helpers;
 using MessengerFake.API.Models.DTOs;
 using MessengerFake.API.Models.Entities;
 using MessengerFake.API.Service;
@@ -58,9 +59,68 @@ namespace MessengerFake.API.Controllers
         [HttpGet("thread/{username}")]
         public async Task<ActionResult<IEnumerable<MessageDto>>> GetMessageThread([FromRoute]string username)
         {
-            var currentUsername = User.GetUsername();
+            try
+            {
+                var currentUsername = User.GetUsername();
 
-            return Ok(await unitOfWork.MessageRepository.GetMessageThread(currentUsername, username));
+                return Ok(await unitOfWork.MessageRepository.GetMessageThread(currentUsername, username));
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, ex.InnerException?.Message ?? ex.Message);
+            }
         }
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<MessageDto>>> GetMessagesForUser([FromQuery] MessageParams messageParams)
+        {
+            try
+            {
+                messageParams.Username = User.GetUsername();
+
+                var messages = await unitOfWork.MessageRepository.GetMessagesForUser(messageParams);
+
+                Response.AddPaginationHeader(messages);
+
+                return messages;
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.InnerException?.Message ?? ex.Message);
+            }
+        }
+
+        [HttpDelete("{id:guid}")]
+        public async Task<ActionResult> DeleteMessage(Guid id)
+        {
+            try
+            {
+                var username = User.GetUsername();
+
+                var message = await unitOfWork.MessageRepository.GetMessage(id);
+
+                if (message == null) return BadRequest("Không thể xóa tin nhắn này");
+
+                if (message.SenderUsername != username && message.RecipientUsername != username) return Forbid();
+
+                if (message.SenderUsername == username) message.SenderDeleted = true;
+
+                if (message.RecipientUsername == username) message.RecipientDeleted = true;
+
+                if (message is { SenderDeleted: true, RecipientDeleted: true })
+                {
+                    unitOfWork.MessageRepository.DeleteMessage(message);
+                }
+
+                if (await unitOfWork.Complete()) return Ok();
+
+                return BadRequest("Có lỗi xảy ra khi xóa tin nhắn");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.InnerException?.Message ?? ex.Message);
+            }
+        }
+
     }
 }

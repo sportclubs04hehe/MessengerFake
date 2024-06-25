@@ -99,7 +99,7 @@ namespace MessengerFake.API.Service.Impl
 
             if (unreadMessages.Count != 0)
             {
-                unreadMessages.ForEach(x => x.DateRead = DateTime.UtcNow);
+                unreadMessages.ForEach(x => x.DateRead = DateTime.Now);
             }
 
             return await query.ProjectTo<MessageDto>(_mapper.ConfigurationProvider).ToListAsync();
